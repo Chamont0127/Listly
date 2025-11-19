@@ -37,6 +37,8 @@ yarn-error.log*
 dist/
 build/
 *.egg-info/
+.expo/
+.expo-shared/
 
 # Test coverage
 coverage/
@@ -47,4 +49,3 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
-
