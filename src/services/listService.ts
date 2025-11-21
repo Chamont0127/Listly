@@ -133,9 +133,22 @@ export const listService = {
   },
 
   async completeList(id: string): Promise<void> {
+    const now = getCurrentTimestamp();
+    
+    // Mark all items in the list as completed
+    const items = await this.getListItems(id);
+    await db.transaction('rw', db.userListItems, async () => {
+      for (const item of items) {
+        if (!item.isCompleted) {
+          await db.userListItems.update(item.id, { isCompleted: true });
+        }
+      }
+    });
+    
+    // Mark the list as completed
     await db.userLists.update(id, {
-      completedAt: getCurrentTimestamp(),
-      updatedAt: getCurrentTimestamp(),
+      completedAt: now,
+      updatedAt: now,
     });
   },
 };

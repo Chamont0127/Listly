@@ -10,8 +10,9 @@ import Animated, {
 import { useTheme } from '../../context/ThemeContext';
 import { ListItem } from '../../types';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const CARD_SIZE = Math.min(SCREEN_WIDTH * 0.8, 300); // Square card, max 300px
+const SWIPE_THRESHOLD = CARD_SIZE * 0.3;
 
 interface SwipeableCardProps {
   item: ListItem;
@@ -33,12 +34,12 @@ export function SwipeableCard({ item, onSwipeRight, onSwipeLeft, progress }: Swi
     .onEnd((event) => {
       if (event.translationX > SWIPE_THRESHOLD) {
         // Swipe right - add to list
-        translateX.value = withSpring(SCREEN_WIDTH);
+        translateX.value = withSpring(SCREEN_WIDTH * 1.5);
         rotate.value = withSpring(20);
         runOnJS(onSwipeRight)();
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         // Swipe left - skip
-        translateX.value = withSpring(-SCREEN_WIDTH);
+        translateX.value = withSpring(-SCREEN_WIDTH * 1.5);
         rotate.value = withSpring(-20);
         runOnJS(onSwipeLeft)();
       } else {
@@ -72,7 +73,7 @@ export function SwipeableCard({ item, onSwipeRight, onSwipeLeft, progress }: Swi
     ...(isDark && theme.colors.glow && {
       textShadowColor: theme.colors.glow,
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 12,
+      textShadowRadius: 4,
     }),
   };
 
@@ -122,8 +123,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    width: SCREEN_WIDTH - 40,
-    height: 300,
+    width: CARD_SIZE,
+    height: CARD_SIZE,
     borderRadius: 20,
     borderWidth: 2,
     justifyContent: 'center',

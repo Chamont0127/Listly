@@ -48,7 +48,12 @@ export function Button({
     if (variant === 'secondary') {
       return { color: theme.colors.text };
     }
-    return { color: '#FFFFFF' };
+    // For primary buttons, use black text if the primary color is bright/green (dark theme)
+    // Otherwise use white text (light theme with blue)
+    const isBrightColor = theme.colors.primary === '#00FF41' || 
+                         theme.colors.primary.toLowerCase().includes('00ff') ||
+                         theme.colors.primary.toLowerCase().includes('green');
+    return { color: isBrightColor ? '#000000' : '#FFFFFF' };
   };
 
   return (
@@ -64,7 +69,7 @@ export function Button({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? theme.colors.primary : '#FFFFFF'} />
+        <ActivityIndicator color={getTextStyle().color} />
       ) : (
         <Text style={[styles.text, getTextStyle(), textStyle]}>{title}</Text>
       )}

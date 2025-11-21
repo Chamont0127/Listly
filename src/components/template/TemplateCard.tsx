@@ -18,7 +18,7 @@ export function TemplateCard({ template, onPress, onDelete }: TemplateCardProps)
     ...(isDark && theme.colors.glow && {
       textShadowColor: theme.colors.glow,
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
+      textShadowRadius: 3,
     }),
   };
 

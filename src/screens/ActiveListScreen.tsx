@@ -8,6 +8,7 @@ import { RootStackParamList } from '../navigation/types';
 import { ListView } from '../components/list/ListView';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { listService } from '../services/listService';
 import { UserList, UserListItem } from '../types';
 
@@ -24,6 +25,10 @@ export default function ActiveListScreen() {
   const [items, setItems] = useState<UserListItem[]>([]);
   const [newItemText, setNewItemText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteItemDialog, setShowDeleteItemDialog] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     loadList();
@@ -59,27 +64,24 @@ export default function ActiveListScreen() {
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
-    Alert.alert(
-      'Delete Item',
-      'Are you sure you want to delete this item?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await listService.deleteListItem(id);
-              setItems(items.filter(item => item.id !== id));
-            } catch (error) {
-              console.error('Error deleting item:', error);
-              Alert.alert('Error', 'Failed to delete item');
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteItem = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteItemDialog(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    try {
+      await listService.deleteListItem(itemToDelete);
+      setItems(items.filter(item => item.id !== itemToDelete));
+      setShowDeleteItemDialog(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      Alert.alert('Error', 'Failed to delete item');
+      setShowDeleteItemDialog(false);
+      setItemToDelete(null);
+    }
   };
 
   const handleAddItem = async () => {
@@ -97,49 +99,38 @@ export default function ActiveListScreen() {
     }
   };
 
-  const handleCompleteList = async () => {
-    Alert.alert(
-      'Complete List',
-      'Mark this list as completed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Complete',
-          onPress: async () => {
-            try {
-              await listService.completeList(listId);
-              navigation.goBack();
-            } catch (error) {
-              console.error('Error completing list:', error);
-              Alert.alert('Error', 'Failed to complete list');
-            }
-          },
-        },
-      ]
-    );
+  const handleCompleteList = () => {
+    setShowCompleteDialog(true);
   };
 
-  const handleDeleteList = async () => {
-    Alert.alert(
-      'Delete List',
-      'Are you sure you want to delete this list?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await listService.deleteList(listId);
-              navigation.goBack();
-            } catch (error) {
-              console.error('Error deleting list:', error);
-              Alert.alert('Error', 'Failed to delete list');
-            }
-          },
-        },
-      ]
-    );
+  const confirmCompleteList = async () => {
+    try {
+      await listService.completeList(listId);
+      // Update local state to reflect all items as completed
+      setItems(items.map(item => ({ ...item, isCompleted: true })));
+      setShowCompleteDialog(false);
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error completing list:', error);
+      Alert.alert('Error', 'Failed to complete list');
+      setShowCompleteDialog(false);
+    }
+  };
+
+  const handleDeleteList = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteList = async () => {
+    try {
+      await listService.deleteList(listId);
+      setShowDeleteDialog(false);
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error deleting list:', error);
+      Alert.alert('Error', 'Failed to delete list');
+      setShowDeleteDialog(false);
+    }
   };
 
   if (loading || !list) {
@@ -154,13 +145,13 @@ export default function ActiveListScreen() {
     ...(isDark && theme.colors.glow && {
       textShadowColor: theme.colors.glow,
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
+      textShadowRadius: 3,
     }),
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: theme.colors.border }]}>
         <Text style={[styles.title, textStyle]}>{list.title}</Text>
         <Text style={[styles.progress, { color: theme.colors.textSecondary }]}>
           {completedCount} / {totalCount} completed
@@ -189,7 +180,7 @@ export default function ActiveListScreen() {
         onDeleteItem={handleDeleteItem}
       />
 
-      <View style={styles.actions}>
+      <View style={[styles.actions, { borderTopColor: theme.colors.border }]}>
         <Button
           title="Complete List"
           onPress={handleCompleteList}
@@ -203,6 +194,41 @@ export default function ActiveListScreen() {
           style={[styles.actionButton, { borderColor: '#FF0000' }]}
         />
       </View>
+
+      <ConfirmDialog
+        visible={showCompleteDialog}
+        title="Complete List"
+        message="Mark this list as completed?"
+        confirmText="Complete"
+        cancelText="Cancel"
+        onConfirm={confirmCompleteList}
+        onCancel={() => setShowCompleteDialog(false)}
+      />
+
+      <ConfirmDialog
+        visible={showDeleteDialog}
+        title="Delete List"
+        message="Are you sure you want to delete this list?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteList}
+        onCancel={() => setShowDeleteDialog(false)}
+        destructive
+      />
+
+      <ConfirmDialog
+        visible={showDeleteItemDialog}
+        title="Delete Item"
+        message="Are you sure you want to delete this item?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => {
+          setShowDeleteItemDialog(false);
+          setItemToDelete(null);
+        }}
+        destructive
+      />
     </View>
   );
 }
@@ -214,7 +240,6 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   title: {
     fontSize: 24,
@@ -241,7 +266,6 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
   },
   actionButton: {
     flex: 1,

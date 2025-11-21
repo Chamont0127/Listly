@@ -19,7 +19,7 @@ export function ListItemCard({ item, onToggle, onDelete }: ListItemCardProps) {
     ...(isDark && theme.colors.glow && !item.isCompleted && {
       textShadowColor: theme.colors.glow,
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
+      textShadowRadius: 3,
     }),
   };
 

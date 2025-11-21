@@ -1,12 +1,12 @@
 export const colors = {
   light: {
     background: '#FFFFFF',
-    surface: '#F5F5F5',
+    surface: '#F0F7FF',
     primary: '#2196F3',
     accent: '#03A9F4',
     text: '#212121',
     textSecondary: '#757575',
-    border: '#E0E0E0',
+    border: '#BBDEFB',
   },
   dark: {
     background: '#000000',
